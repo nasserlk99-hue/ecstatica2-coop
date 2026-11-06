@@ -68,6 +68,7 @@ static bool player1_follow_mode;
 static bool player2_follow_mode;
 static bool player1_fire_requested;
 static bool player2_fire_requested;
+static bool thing_tab_logged;
 static uint32_t player1_last_input_time;
 static uint32_t player2_last_input_time;
 /* E1 run: the Key_F* speed scripts edit each hero's own repertoire (walk
@@ -287,8 +288,10 @@ static void capture_player1_input(void) {
         in->pickup_right = f_down;
         in->swing_left = r_down;
         in->swing_right = c_down;
-        if (p1p && platform_key_hit(p1p, p1_key_fire))
+        if (p1p && platform_key_hit(p1p, p1_key_fire)) {
             player1_fire_requested = true;
+            DBG_LOG(1, "[PISTOL] P1 fire key hit\n");
+        }
     }
     /* Gamepad 0 (the one window_proc already merged into the globals) always
      * drives P1, even straight after a botched swap. */
@@ -396,8 +399,10 @@ static void poll_player2_input(void) {
     in->pickup_right |= platform_key_down(p, PKEY_NUM3);
     in->swing_left   |= platform_key_down(p, PKEY_NUM7);
     in->swing_right  |= platform_key_down(p, PKEY_NUM9);
-    if (platform_key_hit(p, p2_key_fire))
+    if (platform_key_hit(p, p2_key_fire)) {
         player2_fire_requested = true;
+        DBG_LOG(1, "[PISTOL] P2 fire key hit\n");
+    }
 
     platform_gamepad_state_t gp;
     if (platform_gamepad_poll_index(p, 1, &gp) && gp.connected) {

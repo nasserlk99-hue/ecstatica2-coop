@@ -3542,7 +3542,8 @@ void blood_spurt(part_t *part) {
 /* move_fire_bullet_42F8C4 */
 void fire_bullet(part_t *part) {
     if (!part || !part->parent_actor) return;
-    DBG_LOG(1, "[PISTOL] fire from actor=%d part=%d\n", (int)part->parent_actor->name_index, (int)part->name_index);
+    DBG_LOG(1, "[PISTOL] fire from actor=%d part=%d thing4=%p action0=%p\n",
+            (int)part->parent_actor->name_index, (int)part->name_index, (void*)thing_tab[4], (void*)action_tab[0]);
     int hit_found = 0;
 
     /* Chain 1: owner held_by_part. */
@@ -3662,6 +3663,21 @@ void fire_bullet(part_t *part) {
             }
             return;
         }
+    }
+    /* E1 pistol: the ground/enemy-hit path above only spawns the tracer when
+     * the bullet actually hits the ground. Spawn it at the final position too,
+     * so a miss still gives visible feedback. */
+    check_actor_loaded_by_index(4);
+    check_action_loaded(0);
+    if (thing_tab[4] && action_tab[0]) {
+        copy_vector(&thing_tab[4]->position_vector, &pos);
+        int16_t r4 = (int16_t)my_rand();
+        thing_tab[4]->rotate_vector.Z = 0;
+        thing_tab[4]->rotate_vector.Y = (int16_t)(2 * r4);
+        thing_tab[4]->rotate_vector.X = 0;
+        add_to_display_list(thing_tab[4]);
+        thing_tab[4]->actor_act.act_action = NULL;
+        force_action(thing_tab[4], action_tab[0], 1);
     }
 }
 
