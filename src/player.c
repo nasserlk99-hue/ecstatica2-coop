@@ -1016,18 +1016,32 @@ void coop_frame_update(void) {
             net_broadcast_state(game_time);
         } else if (net_mode() == NET_CLIENT) {
             net_send_input(input_to_bits(&coop_players[0].input));
-            /* Client puppet interpolation: if host sent puppet pos, smooth
-             * towards it instead of snapping (reduces jitter on lossy links). */
-            if (net_state.connected && coop_players[1].actor) {
-                actor_t *pup = coop_players[1].actor;
-                int tx = net_state.puppet_x, ty = net_state.puppet_y, tz = net_state.puppet_z;
-                /* 1/4 step per frame ≈ 150 ms smoothing at 60 Hz. */
-                pup->position_vector.X = (int16_t)(pup->position_vector.X + (tx - pup->position_vector.X) / 4);
-                pup->position_vector.Y = (int16_t)(pup->position_vector.Y + (ty - pup->position_vector.Y) / 4);
-                pup->position_vector.Z = (int16_t)(pup->position_vector.Z + (tz - pup->position_vector.Z) / 4);
-                pup->rotate_vector.X = (int16_t)(pup->rotate_vector.X + (net_state.puppet_rx - pup->rotate_vector.X) / 4);
-                pup->rotate_vector.Y = (int16_t)(pup->rotate_vector.Y + (net_state.puppet_ry - pup->rotate_vector.Y) / 4);
-                pup->rotate_vector.Z = (int16_t)(pup->rotate_vector.Z + (net_state.puppet_rz - pup->rotate_vector.Z) / 4);
+            /* Client is remote player. Freeze both local actors to pure
+             * puppets and smooth them toward the host's authoritative state. */
+            if (net_state.connected) {
+                actor_t *selfp = coop_players[1].actor;
+                actor_t *other = coop_players[0].actor;
+                if (selfp && selfp->actor_behavior != BH_EXTERNAL)
+                    selfp->actor_behavior = BH_EXTERNAL;
+                if (other && other->actor_behavior != BH_EXTERNAL)
+                    other->actor_behavior = BH_EXTERNAL;
+                if (other && (net_state.p1_x | net_state.p1_z)) {
+                    other->position_vector.X = (int16_t)(other->position_vector.X + (net_state.p1_x - other->position_vector.X) / 4);
+                    other->position_vector.Y = (int16_t)(other->position_vector.Y + (net_state.p1_y - other->position_vector.Y) / 4);
+                    other->position_vector.Z = (int16_t)(other->position_vector.Z + (net_state.p1_z - other->position_vector.Z) / 4);
+                    other->rotate_vector.X = (int16_t)(other->rotate_vector.X + (net_state.p1_rx - other->rotate_vector.X) / 4);
+                    other->rotate_vector.Y = (int16_t)(other->rotate_vector.Y + (net_state.p1_ry - other->rotate_vector.Y) / 4);
+                    other->rotate_vector.Z = (int16_t)(other->rotate_vector.Z + (net_state.p1_rz - other->rotate_vector.Z) / 4);
+                }
+                if (selfp) {
+                    int tx = net_state.puppet_x, ty = net_state.puppet_y, tz = net_state.puppet_z;
+                    selfp->position_vector.X = (int16_t)(selfp->position_vector.X + (tx - selfp->position_vector.X) / 4);
+                    selfp->position_vector.Y = (int16_t)(selfp->position_vector.Y + (ty - selfp->position_vector.Y) / 4);
+                    selfp->position_vector.Z = (int16_t)(selfp->position_vector.Z + (tz - selfp->position_vector.Z) / 4);
+                    selfp->rotate_vector.X = (int16_t)(selfp->rotate_vector.X + (net_state.puppet_rx - selfp->rotate_vector.X) / 4);
+                    selfp->rotate_vector.Y = (int16_t)(selfp->rotate_vector.Y + (net_state.puppet_ry - selfp->rotate_vector.Y) / 4);
+                    selfp->rotate_vector.Z = (int16_t)(selfp->rotate_vector.Z + (net_state.puppet_rz - selfp->rotate_vector.Z) / 4);
+                }
             }
         }
         net_frame_update();

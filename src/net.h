@@ -47,6 +47,7 @@ typedef struct net_state_s {
     char host_ip[16];
     int host_port;
     /* Client side: last host state + interpolation */
+    int16_t p1_x, p1_y, p1_z, p1_rx, p1_ry, p1_rz;
     int16_t puppet_x, puppet_y, puppet_z;
     int16_t puppet_rx, puppet_ry, puppet_rz;
     int16_t puppet_prev_x, puppet_prev_z;

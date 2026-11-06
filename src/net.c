@@ -167,6 +167,8 @@ void net_broadcast_state(int tick) {
     actor_t *p1 = coop_players[0].actor;
     actor_t *p2 = coop_players[1].actor;
     if (!p1 || !p2) return;
+    /* No client address known yet (still INADDR_ANY): wait, don't spam fails. */
+    if (host_addr.sin_addr.s_addr == 0) return;
 
     /* Host broadcasts both players' state so client can mirror */
     char buf[256];
@@ -207,7 +209,7 @@ void net_apply_remote_state(void) {
                 DBG_LOG(1, "[NET] client connected from %s\n", inet_ntop(AF_INET, &src.sin_addr, buf, sizeof(buf)));
                 /* Record client address for state broadcasts */
                 host_addr.sin_family = AF_INET;
-                host_addr.sin_port = htons((uint16_t)src.sin_port);
+                host_addr.sin_port = src.sin_port;
                 host_addr.sin_addr = src.sin_addr;
             } else if (net_state.mode == NET_CLIENT) {
                 /* Client acknowledges host is back */
@@ -222,7 +224,13 @@ void net_apply_remote_state(void) {
             if (sscanf(buf, "S,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
                 &seq, &tick, &t1, &x1, &y1, &z1, &rx1, &ry1, &rz1, &hp1, &bh1,
                 &t2, &x2, &y2, &z2, &rx2, &ry2, &rz2, &hp2, &bh2, &gt) == 21) {
-                /* Client mirrors host's P1=P2 puppet */
+                /* Client mirrors host's P1 (host player) and P2 (own char) */
+                net_state.p1_x = (int16_t)x1;
+                net_state.p1_y = (int16_t)y1;
+                net_state.p1_z = (int16_t)z1;
+                net_state.p1_rx = (int16_t)rx1;
+                net_state.p1_ry = (int16_t)ry1;
+                net_state.p1_rz = (int16_t)rz1;
                 net_state.puppet_prev_x = net_state.puppet_x;
                 net_state.puppet_prev_z = net_state.puppet_z;
                 net_state.puppet_x = (int16_t)x2;
@@ -235,6 +243,7 @@ void net_apply_remote_state(void) {
                 net_state.connected = true;
                 net_state.last_recv_tick = tick;
                 last_state_tick = tick;
+                DBG_LOG(1, "[NET] client recv state p1=(%d,%d) p2=(%d,%d)\n", x1, z1, x2, z2);
             }
         } else if (buf[0] == 'I' && net_state.mode == NET_HOST) {
             /* Client input packet - forward to P2 */
@@ -243,9 +252,11 @@ void net_apply_remote_state(void) {
             if (sscanf(buf, "I,%d,%d,%u", &seq, &tick, &bits) == 3) {
                 net_state.last_input_bits = bits;
                 net_state.connected = true;
+                DBG_LOG(1, "[NET] host recv input bits=%u peer=%s:%d\n", bits,
+                        inet_ntop(AF_INET, &src.sin_addr, buf, sizeof(buf)), ntohs(src.sin_port));
                 /* Record client address for state broadcasts */
                 host_addr.sin_family = AF_INET;
-                host_addr.sin_port = htons((uint16_t)src.sin_port);
+                host_addr.sin_port = src.sin_port;
                 host_addr.sin_addr = src.sin_addr;
             }
         }
