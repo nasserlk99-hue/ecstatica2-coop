@@ -3542,6 +3542,7 @@ void blood_spurt(part_t *part) {
 /* move_fire_bullet_42F8C4 */
 void fire_bullet(part_t *part) {
     if (!part || !part->parent_actor) return;
+    DBG_LOG(1, "[PISTOL] fire from actor=%d part=%d\n", (int)part->parent_actor->name_index, (int)part->name_index);
     int hit_found = 0;
 
     /* Chain 1: owner held_by_part. */
@@ -3595,6 +3596,8 @@ void fire_bullet(part_t *part) {
 
         for (actor_t *target = root_thing; target; target = target->next_in_display_list) {
             if (target == part->parent_actor) continue;
+            /* Co-op: never damage a local player with the pistol. */
+            if (coop_is_player_actor(target)) continue;
 
             int hittable = 0;
             rephead_t *rep = target->actor_reperture;
@@ -3633,6 +3636,7 @@ void fire_bullet(part_t *part) {
                 }
             }
             hit_found = 1;
+            DBG_LOG(1, "[PISTOL] hit target=%d hp=%d\n", (int)target->name_index, (int)target->actor_hitpoints);
             break;
         }
         if (hit_found) break;
