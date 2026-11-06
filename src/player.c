@@ -901,8 +901,10 @@ void coop_reset_game(void) {
 
 void coop_frame_update(void) {
     /* Restore selected_thing to P1 if it was changed to P2 in the previous
-     * frame for camera purposes. */
-    if (coop_players[0].actor && selected_thing != coop_players[0].actor &&
+     * frame for camera purposes. The online CLIENT keeps its camera on its own
+     * character (P2) instead, so it doesn't force back to P1 here. */
+    if (net_mode() != NET_CLIENT &&
+        coop_players[0].actor && selected_thing != coop_players[0].actor &&
         (selected_thing == coop_players[1].actor)) {
         selected_thing = coop_players[0].actor;
     }
@@ -1042,6 +1044,10 @@ void coop_frame_update(void) {
                     selfp->rotate_vector.Y = (int16_t)(selfp->rotate_vector.Y + (net_state.puppet_ry - selfp->rotate_vector.Y) / 4);
                     selfp->rotate_vector.Z = (int16_t)(selfp->rotate_vector.Z + (net_state.puppet_rz - selfp->rotate_vector.Z) / 4);
                 }
+                /* Client camera: follow our OWN character (P2 puppet) so each
+                 * player sees their own view. Host keeps following P1. */
+                if (selfp)
+                    selected_thing = selfp;
             }
         }
         net_frame_update();
