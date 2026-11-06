@@ -69,6 +69,7 @@ static bool player2_follow_mode;
 static bool player1_fire_requested;
 static bool player2_fire_requested;
 static bool thing_tab_logged;
+static bool net_title_set;
 static uint32_t player1_last_input_time;
 static uint32_t player2_last_input_time;
 /* E1 run: the Key_F* speed scripts edit each hero's own repertoire (walk
@@ -915,6 +916,15 @@ void coop_frame_update(void) {
      * state in the engine globals, making P1 appear stuck pressing keys. */
     if (input_swapped)
         coop_end_actor_input();
+
+    /* Label the window so a one-PC host+join test can tell the two apart. */
+    if (!net_title_set && net_is_active() && win_platform()) {
+        net_title_set = true;
+        platform_set_title(win_platform(),
+                           net_mode() == NET_HOST
+                               ? "Ecstatica Co-op - HOST (Player 1)"
+                               : "Ecstatica Co-op - JOINED (Player 2)");
+    }
 
     if (!coop_enabled()) {
         return;
