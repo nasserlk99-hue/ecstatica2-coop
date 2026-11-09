@@ -14,6 +14,7 @@ set(C_SRCS
     file.c
     move.c
     player.c
+    pistol_fx.c
     net.c
     menu.c
     req.c

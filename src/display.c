@@ -16,6 +16,7 @@
 #include "map.h"
 #include "move.h"
 #include "music.h"
+#include "pistol_fx.h"
 #include "prof.h"
 #include "player.h"
 #include "raster.h"
@@ -880,6 +881,7 @@ void show_parts(void) {
 
     db = 1 - db;
     draw_debug_overlay();
+    pistol_fx_draw();
     flip_win95();
     game_up_and_running = 1;
 }

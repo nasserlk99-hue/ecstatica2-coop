@@ -16,6 +16,7 @@
 #include "map.h"
 #include "menu.h"
 #include "music.h"
+#include "pistol_fx.h"
 #include "player.h"
 #include "req.h"
 #include "topo.h"
@@ -3584,6 +3585,8 @@ void fire_bullet(part_t *part) {
     int16_t hit_angle_val = arctan(direction.X, direction.Z);
     vector_t pos;
     copy_vector(&pos, &part->ellipse_center);
+    vector_t fx_from;
+    copy_vector(&fx_from, &pos);   /* muzzle position for the tracer */
 
     direction.X = (int16_t)(((int32_t)direction.X << 7) >> 14);
     direction.Y = (int16_t)(((int32_t)direction.Y << 7) >> 14);
@@ -3649,36 +3652,15 @@ void fire_bullet(part_t *part) {
                 pos.X += direction.X; pos.Y += direction.Y; pos.Z += direction.Z;
                 if (find_height_now_vis(&pos) < pos.Y) break;
             }
-            check_actor_loaded_by_index(4);
-            check_action_loaded(0);
-            if (thing_tab[4] && action_tab[0]) {
-                copy_vector(&thing_tab[4]->position_vector, &pos);
-                int16_t r4 = (int16_t)my_rand();
-                thing_tab[4]->rotate_vector.Z = 0;
-                thing_tab[4]->rotate_vector.Y = (int16_t)(2 * r4);
-                thing_tab[4]->rotate_vector.X = 0;
-                add_to_display_list(thing_tab[4]);
-                thing_tab[4]->actor_act.act_action = NULL;
-                force_action(thing_tab[4], action_tab[0], 1);
-            }
+            /* Draw the tracer ourselves: E1 has no bullet/tracer actor, and
+             * spawning thing_tab[4] there summons a warrior model. */
+            pistol_fx_add(&fx_from, &pos);
             return;
         }
     }
-    /* E1 pistol: the ground/enemy-hit path above only spawns the tracer when
-     * the bullet actually hits the ground. Spawn it at the final position too,
-     * so a miss still gives visible feedback. */
-    check_actor_loaded_by_index(4);
-    check_action_loaded(0);
-    if (thing_tab[4] && action_tab[0]) {
-        copy_vector(&thing_tab[4]->position_vector, &pos);
-        int16_t r4 = (int16_t)my_rand();
-        thing_tab[4]->rotate_vector.Z = 0;
-        thing_tab[4]->rotate_vector.Y = (int16_t)(2 * r4);
-        thing_tab[4]->rotate_vector.X = 0;
-        add_to_display_list(thing_tab[4]);
-        thing_tab[4]->actor_act.act_action = NULL;
-        force_action(thing_tab[4], action_tab[0], 1);
-    }
+    /* Max range reached (or a target was hit earlier): show the tracer at the
+     * final position too, so every shot gives visible feedback. */
+    pistol_fx_add(&fx_from, &pos);
 }
 
 /* move_check_part_hit  E1: 0x427CE0 | E2: 0x42FA6C */
