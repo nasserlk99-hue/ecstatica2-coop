@@ -1,11 +1,13 @@
 # Ecstatica Co-op
 
-Local two-player co-op development for **Ecstatica (1994)**, built on the
-open-source [Ečstatica decompilation and port](https://github.com/xesf/ecstatica).
+Local two-player co-op development for **Ecstatica II (1997)** and
+**Ecstatica (1994)**, built on the open-source
+[Ecstatica decompilation and port](https://github.com/xesf/ecstatica). One
+executable runs both games; the version is detected from the installed data.
 
 This repository contains source code and build tooling only. It does **not**
-include the game data — you need a legitimate installed copy of Ecstatica to
-play. No game files are tracked here; `data/` is ignored.
+include the game data — you need a legitimate installed copy of Ecstatica or
+Ecstatica II to play. No game files are tracked here; `data/` is ignored.
 
 ## Features
 
